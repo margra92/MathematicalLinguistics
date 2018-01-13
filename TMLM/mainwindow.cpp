@@ -18,12 +18,20 @@ MainWindow::MainWindow(QWidget *parent) :
     tm->addTransition(1,'0',StateEdge(1,'-',NONE));
     tm->addTransition(1,'1',StateEdge(1,'-',NONE));
     tm->addTransition(1,'-',StateEdge(1,'-',NONE));
-
+    ui->actualStateNumber->display(tm->currentState);
     connect(timer, SIGNAL(timeout()), this, SLOT(performStep()));
 }
 
 MainWindow::~MainWindow()
 {
+    if(tm != nullptr)
+    {
+        delete tm;
+    }
+    if(timer != nullptr)
+    {
+        delete timer;
+    }
     delete ui;
 }
 
@@ -38,7 +46,6 @@ void MainWindow::on_addTextToTapeButton_clicked()
 
     tempText = ui->tapeTextLineEdit->text().toStdString();
     tapeTextPtr = &tempText;
-    qDebug() << "1: "<<QString::number(tempText.length());
     ui->textEdit->moveCursor( QTextCursor::Start, QTextCursor::MoveAnchor);
     ui->textEdit->moveCursor( QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
     ui->textEdit->textCursor().insertText(QString::fromStdString(*tapeTextPtr));
@@ -49,7 +56,6 @@ void MainWindow::on_addTextToTapeButton_clicked()
 
     head = "^";
     ui->textEdit->textCursor().insertText(QString::fromStdString(head));
-    qDebug() << "2: " <<QString::fromStdString(*tapeTextPtr);
 }
 
 void MainWindow::on_autoMoveButton_clicked()
@@ -82,11 +88,19 @@ void MainWindow::performStep()
     ui->textEdit->moveCursor( QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
     ui->textEdit->moveCursor( QTextCursor::End, QTextCursor::KeepAnchor);
     head.clear();
+
     for(unsigned int i=0; i < tm->headIndex;i++)
     {
-        head += "  ";
+        head += "~";
     }
     head += "^";
     ui->textEdit->textCursor().insertText(QString::fromStdString(head));
-    qDebug() << "3 :"  <<QString::fromStdString(*tapeTextPtr);
+    ui->actualStateNumber->display(tm->currentState);
+    if(timer->isActive() && (tm->isFinal || tm->isForbidden))
+    {
+        timer->stop();
+        isAutoEnabled = false;
+        ui->autoMoveButton->setText("Start auto move");
+    }
+
 }
